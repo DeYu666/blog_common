@@ -1,0 +1,222 @@
+syntax = "proto3";
+package pb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+import "pb/common/common.proto"; 
+
+option go_package = "github.com/DeYu666/blog_common/gen/pb";
+
+// clang-format off
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+  info: {
+    title: "blog system: post service"
+    version: "v1.0.0"
+  };
+};
+
+service PostService {
+
+  // 点击喜欢
+  rpc likePost (ClikePostRequest) returns (ClikePostsReply) {
+    option (google.api.http) = {
+      get: "/v1/post/{id}/like"
+    };
+  }
+
+
+  // 获取博客文章列表，返回除 文章 body 以外的内容
+  rpc FindPosts (FindPostsRequest) returns (FindPostsReply) {
+    option (google.api.http) = {
+      get: "/v1/posts"
+    };
+  }
+
+  // 获取单个博客文章，同时文章观看数会增加
+  rpc GetPost (GetPostRequest) returns (GetPostReply) {
+    option (google.api.http) = {
+      get: "/v1/post/{id}"
+    };
+  }
+
+  // 生成新的博客文章
+  // 需要带上 X-Keystone-User-Info
+  rpc CreatePost (CreatePostRequest) returns (CreatePostReply) {
+    option (google.api.http) = {
+      post: "/v1/post"
+      body: "info"
+    };
+  }
+
+  // 更新博客文章
+  // 需要带上X-Keystone-User-Info
+  rpc UpdatePost (UpdatePostRequest) returns (UpdatePostReply) {
+    option (google.api.http) = {
+      put: "/v1/post/{id}"
+      body: "info"
+    };
+  }
+
+  // 删除博客文章
+  // 需要带上X-Keystone-User-Info
+  rpc DeletePost (DeletePostRequest) returns (DeletePostReply) {
+    option (google.api.http) = {
+      delete: "/v1/post/{id}"
+    };
+  }
+}
+
+// ////////////////////////////////////////////////////////////
+//
+// 博客内容相关请求返回结构
+//
+// ////////////////////////////////////////////////////////////
+
+
+// 点击文章查询请求结构
+message ClikePostRequest {
+  // 文章编号
+  uint64 id = 1;
+}
+
+// 单个文章查询返回结构
+message ClikePostsReply {
+}
+
+// 文章查询请求结构
+message FindPostsRequest {
+  // 文章编号列表，用于指定查询哪些文章
+  repeated uint64 ids = 1;
+  // 类目编号列表
+  repeated uint64 category_ids = 2;
+  // 标签编号列表
+  repeated uint64 tag_ids = 3;
+
+  // list请求对应的翻页：offset, limit
+  common.ListPage page = 5;
+}
+
+// 文章列表查询返回结构
+message FindPostsReply {
+  repeated Post posts = 1;
+  // list返回对应的翻页：offset, total
+  common.ListPage page = 2;
+}
+
+// 单个文章查询请求结构
+message GetPostRequest {
+  // 文章编号
+  uint64 id = 1;
+}
+
+// 单个文章查询返回结构
+message GetPostReply {
+  Post post = 1;
+}
+
+// 文章新增请求结构
+message CreatePostRequest {
+  // 文章基本信息
+  PostUpsert info = 1;
+}
+
+// 文章新增返回结构
+message CreatePostReply {
+  // 文章编号
+  uint64 id = 1;
+}
+
+// 文章修改请求结构
+message UpdatePostRequest {
+  // 文章编号
+  uint64 id = 1;
+  // 文章基本信息
+  PostUpsert info = 2;
+}
+
+// 文章修改返回结构
+message UpdatePostReply {}
+
+// 文章删除请求结构
+message DeletePostRequest {
+  // 文章编号
+  uint64 id = 1;
+}
+
+// 文章删除请求结构
+message DeletePostReply {}
+
+// ////////////////////////////////////////////////////////////
+//
+// 文章相关CRUD结构
+//
+// ////////////////////////////////////////////////////////////
+
+// 文章插入/修改结构
+message PostUpsert {
+  // 可选，文章编号，主要为初始化使用
+  uint64 id = 30;
+  // 博客标题
+  string title = 1;
+  // 博客内容
+  string body = 2;
+  // 博客内容摘要
+  string excerpt = 3;
+  // 博客封面
+  string cover_url = 4;
+  // 博客内容抬头图
+  string title_url = 5;
+  // 博客状态
+  Post.Status status = 6;
+  // 类目编号
+  uint64 category_id = 7;
+  // 标签编号列表
+  repeated uint64 tag_ids = 8;
+  // 用户编号
+  uint64 author_id = 9;
+}
+
+
+// 博客信息
+message Post {
+   // 博客的状态枚举
+   enum Status {
+    // 不限制，只是用来筛选状态用
+    STATUS_UNLIMITED = 0;
+    // 开放
+    STATUS_OPEN = 1;
+    // 关闭
+    STATUS_CLOSE = 2;
+    // 占位符，用于判断最大值，这个值会随时间改变
+    STATUS_NONE = 8;
+  }
+  // 博客编号
+  uint64 id = 1;
+  // 博客标题
+  string title = 2;
+  // 博客内容
+  string body = 3;
+  // 博客内容摘要
+  string excerpt = 4;
+  // 博客内容观看人数，系统自动增加
+  uint32 views = 5;
+  // 博客内容喜欢人数
+  uint32 likes = 6;
+  // 博客封面
+  string cover_url = 7;
+  // 博客内容抬头图
+  string title_url = 8;
+  // 博客状态
+  Status status = 9;
+  // 类目编号
+  uint64 category_id = 10;
+  // 标签编号列表
+  repeated uint64 tag_ids = 11;
+  // 用户编号
+  uint64 author_id = 12;
+  // 创建时间, 系统自动生成.
+  google.protobuf.Timestamp created_at = 18;
+  // 修改时间, 系统自动生成.
+  google.protobuf.Timestamp updated_at = 19;
+}

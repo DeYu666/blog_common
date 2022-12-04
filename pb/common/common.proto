@@ -1,0 +1,183 @@
+syntax = "proto3";
+package common;
+
+import "protoc-gen-swagger/options/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/DeYu666/blog_common/gen/pb/common";
+
+// clang-format off
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+  info: {
+    title: "blog system: common service"
+    version: "v1.0.0"
+  };
+};
+// clang-format on
+
+
+message ListPage {
+  // 可选, 开始位置, 取值:>=0, 0为第一条; 默认值为0.
+  // 返回本次请求返回的第一条记录实际位置(一般与输入一致).
+  // [EN] Optional, start position, value: > = 0, 0 is the first line; the
+  // default value is 0. In response, actual offset of the first returned record
+  // is returned (generally equals to the offset in request).
+  int32 offset = 1;
+  // 长度, 取值范围[1,100], 如果超出范围, 则返回失败;
+  // 在某些接口中limit范围可能会重新定义, 请以其接口的补充说明为准. [EN] Length,
+  // default value range [1,100], if it is out of the range, error will be
+  // returned; as the limit range may be redefined in some APIs, please refer to
+  // the supplementary description of these APIs.
+  int32 limit = 2;
+  // 可选, 总数, 请求无须填此参数, 响应时填写.
+  // [EN] Optional, this parameter is not required for request, but will be
+  // filled in response.
+  int32 total = 3;
+}
+
+
+
+
+
+enum SPUProperty {
+  // 保留位
+  UNKNOWN = 0;
+  // 静态库，时空库等产品1:N搜索时需要用
+  QPS = 1;
+  // 静态库，时空库等产品的容量限制
+  CAPACITY = 2;
+  // 后付费扣减时间，比如`T+30`中的`+30`
+  POSTPAID = 3;
+  // 预付费扣减时间，比如`T-1`中的`-1`
+  PREPAID = 4;
+  // 数据源
+  VALUEPOINT = 20;
+}
+
+enum PayType {
+  // 未知模式
+  PAY_TYPE_UNKNOWN = 0;
+  // 预付费(前向付费)模式
+  PAY_TYPE_PRE = 1;
+  // 后付费模式
+  PAY_TYPE_POST = 2;
+}
+
+enum MetricType {
+  // 未知模式
+  METRIC_TYPE_UNKNOWN = 0;
+  // 计件类的SKU
+  COUNTER = 1;
+  // 计件的包
+  COUNTER_PACKAGE = 2;
+  // 计件*计时的SKU
+  GAUGE = 3;
+  // 计件*计时的包
+  GAUGE_PACKAGE = 4;
+}
+
+
+
+message PageMarker {
+  // 分页大小.
+  // [EN] Page size, range [10, 100].
+  int32 limit = 1;
+  // 分页标志, 第一页传空. 默认为空.
+  // [EN] Page marker, first page is empty. Empty by default.
+  string marker = 2;
+}
+
+enum ServiceAction {
+  // 未知的服务操作.
+  SERVICE_ACTION_UNKNOWN = 0;
+  // 创建视频流，创建db, 推图. 属性搜索, FE/PE特征提取.
+  SERVICE_ACTION_CREATE = 1;
+  // ACTION_READ for 1:1查询, 1:N查询 1:1比对.
+  SERVICE_ACTION_READ = 2;
+  // 更新.
+  SERVICE_ACTION_UPDATE = 3;
+  // 删除.
+  SERVICE_ACTION_DELETE = 4;
+}
+
+// 审计日志信息
+// [EN] audit log
+message AuditLogTrack {
+  // 日志的uuid，作为日志的唯一标识，用于去重.
+  string log_key = 1;
+  // 账户id.
+  uint64 account_id = 2;
+  // site id.没有的暂时写0
+  uint32 site_id = 3;
+  // project id. 没有的暂时写0
+  uint32 project_id = 4;
+  // spu id.
+  uint64 spu_id = 5;
+  // 数据来源，IDS是API url，其他业务根据需要定义具体的
+  string value_point = 6;
+  // user_id.
+  uint32 user_id = 7;
+  // 应用 id.
+  ServiceAction service_action = 8;
+  // 订单生效时间/请求发生时间/任务创建时间/服务生效时间，就是具体的服务开始的时间
+  // [EN] operation timestamp.
+  google.protobuf.Timestamp operation_time = 9;
+  // 批量操作的计数，比如对于推图,记录有几张图.
+  int64 count = 10;
+  // http status code
+  uint32 status_code = 11;
+  // metadata
+  string metadata = 12;
+  // 日志打印时的时间
+  google.protobuf.Timestamp event_time = 13;
+}
+
+// 账户的服务的状态, 默认NORMAL状态不保存，DB种查不到就是NORMAL，运营设置状态后才在DB保存
+enum ServiceStatus {
+  // 服务运行中
+  SERVICE_STATUS_NORMAL = 0;
+  // 服务停止
+  SERVICE_STATUS_FORBIDDEN = 1;
+}
+
+// 订单切换时，bill-service通知order服务quota
+message ServiceQuota {
+  // 账户id
+  uint64 account_id = 1;
+  // site id
+  uint64 site_id = 2;
+  // 项目id
+  uint64 project_id = 3;
+  // spu_id
+  uint64 spu_id = 4;
+  // 当前在用的order_id, 0代表当前没有找到一个有效的订单
+  uint64 order_id = 5;
+  // 当前在用的order_item_id
+  uint64 order_item_id = 6;
+  // sku type: counter, counter_package, gauge, gauge_package 4种 
+  MetricType sku_type = 7;
+  // quotas是一个json结构，{limit: 5 }, qps/带宽限制在limit, limit为0表示不可用，limit > 0 qps/带宽限制值,具体的根据sku type由业务层判断
+  string quotas = 8;
+}
+
+// quota有变化时，通知相关模块api-ingress, dccService, dscService, bill-service
+message AccountServiceStatus {
+  // 账户id
+  uint64 account_id = 1;
+  // 当前是否停服,如果停服，quotas忽略
+  ServiceStatus service_status = 2;
+}
+message PostQuotaOrStatus {
+  enum MessageType {
+    // 发布service quota 信息
+    QUOTA = 0;
+    // 发布账户状态
+    STATUS = 1;
+  }
+  // 消息类型
+  MessageType message_type = 1;
+  // MessageType 为QUOTA时的消息体
+  ServiceQuota service_quotas = 2;
+  // MessageType 为STATUS时的消息体
+  AccountServiceStatus service_status = 3;
+}

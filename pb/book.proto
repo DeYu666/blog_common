@@ -1,0 +1,280 @@
+syntax = "proto3";
+package pb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+import "pb/common/common.proto"; 
+
+option go_package = "github.com/DeYu666/blog_common/gen/pb";
+
+// clang-format off
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+  info: {
+    title: "blog system: post service"
+    version: "v1.0.0"
+  };
+};
+// clang-format on
+
+service BooksListService {
+
+  // 获取书籍列表，返回除 bookcontent 书籍内容 以外的信息
+  rpc FindBooksLists (FindBooksListsRequest) returns (FindBooksListsReply) {
+    option (google.api.http) = {
+      get: "/v1/books_list"
+    };
+  }
+
+  // 获取单个书籍信息
+  rpc GetBooksList (GetBooksListRequest) returns (GetBooksListReply) {
+    option (google.api.http) = {
+      get: "/v1/books_list/{id}"
+    };
+  }
+
+  // 生成新的书籍信息
+  // 需要带上X-Keystone-User-Info
+  rpc CreateBooksList (CreateBooksListRequest) returns (CreateBooksListReply) {
+    option (google.api.http) = {
+      post: "/v1/books_list"
+      body: "info"
+    };
+  }
+
+  // 更新书籍信息
+  // 需要带上X-Keystone-User-Info
+  rpc UpdateBooksList (UpdateBooksListRequest) returns (UpdateBooksListReply) {
+    option (google.api.http) = {
+      put: "/v1/books_list/{id}"
+      body: "info"
+    };
+  }
+
+  // 删除书籍信息
+  // 需要带上X-Keystone-User-Info
+  rpc DeleteBooksList (DeleteBooksListRequest) returns (DeleteBooksListReply) {
+    option (google.api.http) = {
+      delete: "/v1/books_list/{id}"
+    };
+  }
+
+  // 生成新的书籍内容
+  // 需要带上X-Keystone-User-Info
+  rpc CreateBookContent (CreateBookContentRequest) returns (CreateBookContentReply) {
+    option (google.api.http) = {
+      post: "/v1/book/{book_id}/book_content"
+      body: "info"
+    };
+  }
+
+  // 更新书籍内容
+  // 需要带上X-Keystone-User-Info
+  rpc UpdateBookContent (UpdateBookContentRequest) returns (UpdateBookContentReply) {
+    option (google.api.http) = {
+      put: "/v1/book/{book_id}/book_content/{id}"
+      body: "info"
+    };
+  }
+
+  // 删除书籍内容
+  // 需要带上X-Keystone-User-Info
+  rpc DeleteBookContent (DeleteBookContentRequest) returns (DeleteBookContentReply) {
+    option (google.api.http) = {
+      delete: "/v1/book/{book_id}/book_content/{id}"
+    };
+  }
+
+}
+
+// ////////////////////////////////////////////////////////////
+//
+// 书籍列表内容相关请求返回结构
+//
+// ////////////////////////////////////////////////////////////
+
+
+// 点击书籍信息查询请求结构
+message ClickBooksListRequest {
+  // 文章编号
+  uint64 id = 1;
+}
+
+// 单个文章查询返回结构
+message ClickBooksListsReply {
+}
+
+// 书籍信息查询请求结构
+message FindBooksListsRequest {
+  // 书籍信息编号列表，用于指定查询哪些书籍信息
+  repeated uint64 ids = 1;
+  // 书籍状态
+  BooksList.Status status = 2;
+
+  // list请求对应的翻页：offset, limit
+  common.ListPage page = 5;
+}
+
+// 书籍信息列表查询返回结构
+message FindBooksListsReply {
+  repeated BooksList books = 1;
+  // list返回对应的翻页：offset, total
+  common.ListPage page = 2;
+}
+
+// 单个书籍信息查询请求结构
+message GetBooksListRequest {
+  // 文章编号
+  uint64 id = 1;
+}
+
+// 单个书籍信息查询返回结构
+message GetBooksListReply {
+  BooksList book = 1;
+}
+
+// 书籍信息新增请求结构
+message CreateBooksListRequest {
+  // 书籍信息基本信息
+  BooksListUpsert info = 1;
+}
+
+// 书籍信息新增返回结构
+message CreateBooksListReply {
+  // 书籍信息编号
+  uint64 id = 1;
+}
+
+// 书籍信息修改请求结构
+message UpdateBooksListRequest {
+  // 书籍信息编号
+  uint64 id = 1;
+  // 书籍信息基本信息
+  BooksListUpsert info = 2;
+}
+
+// 书籍信息修改返回结构
+message UpdateBooksListReply {}
+
+// 书籍信息删除请求结构
+message DeleteBooksListRequest {
+  // 书籍信息编号
+  uint64 id = 1;
+}
+
+// 书籍信息删除请求结构
+message DeleteBooksListReply {}
+
+
+
+// 书籍内容新增请求结构
+message CreateBookContentRequest {
+  uint64 book_id = 1;
+  BookContent info = 2;
+}
+// 书籍内容新增返回结构
+message CreateBookContentReply {
+  uint64 id = 1;
+}
+
+// 书籍内容更新请求结构
+message UpdateBookContentRequest {
+  uint64 book_id = 1;
+  uint64 id = 2;
+  BookContent info = 3;
+}
+// 书籍内容更新返回结构
+message UpdateBookContentReply {}
+
+// 书籍内容删除请求结构
+message DeleteBookContentRequest {
+  uint64 book_id = 1;
+  uint64 id = 2;
+}
+// 书籍内容删除返回结构
+message DeleteBookContentReply {}
+
+// ////////////////////////////////////////////////////////////
+//
+// 文章相关CRUD结构
+//
+// ////////////////////////////////////////////////////////////
+
+// 文章插入/修改结构
+message BooksListUpsert {
+  // 可选，文章编号，主要为初始化使用
+  uint64 id = 30;
+  // 书籍列表标题
+  string title = 1;
+  // 书籍列表内容
+  string body = 2;
+  // 书籍列表内容摘要
+  string excerpt = 3;
+  // 书籍列表封面
+  string cover_url = 4;
+  // 书籍列表内容抬头图
+  string title_url = 5;
+  // 书籍列表状态
+  BooksList.Status status = 6;
+  // 类目编号
+  uint64 category_id = 7;
+  // 标签编号列表
+  repeated uint64 tag_ids = 8;
+  // 用户编号
+  uint64 author_id = 9;
+}
+
+
+message BookContent {
+  // 书籍内容编号
+  uint64 id = 1;
+  // 书籍内容
+  string BookContent = 2;
+  // 创建时间, 系统自动生成.
+  google.protobuf.Timestamp created_at = 18;
+  // 修改时间, 系统自动生成.
+  google.protobuf.Timestamp updated_at = 19;
+}
+
+// 书籍列表信息
+message BooksList {
+   // 书籍列表的状态枚举
+   enum Status {
+    // 不限制，只是用来筛选状态用
+    STATUS_UNLIMITED = 0;
+    // 未读
+    STATUS_NOT_START = 1;
+    // 正在读
+    STATUS_READING = 2;
+    // 已读完
+    STATUS_CLOSE = 3;
+    // 占位符，用于判断最大值，这个值会随时间改变
+    STATUS_NONE = 8;
+  }
+  // 书籍列表编号
+  uint64 id = 1;
+  // 书籍标题
+  string BookName = 2;
+  // 书籍内容
+  repeated BookContent book_contents = 3;
+  // 书籍列表内容摘要
+  string excerpt = 4;
+  // 书籍列表观看人数
+  uint32 views = 5;
+  // 书籍列表内容喜欢人数
+  uint32 likes = 6;
+  // 书籍列表封面
+  string cover_url = 7;
+  // 书籍列表内容抬头图
+  string title_url = 8;
+  // 书籍状态
+  Status status = 9;
+  // 标签编号列表
+  repeated uint64 tag_ids = 11;
+  // 用户编号
+  uint64 author_id = 12;
+  // 创建时间, 系统自动生成.
+  google.protobuf.Timestamp created_at = 18;
+  // 修改时间, 系统自动生成.
+  google.protobuf.Timestamp updated_at = 19;
+}

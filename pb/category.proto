@@ -1,0 +1,166 @@
+syntax = "proto3";
+package pb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+import "pb/common/common.proto"; 
+
+option go_package = "github.com/DeYu666/blog_common/gen/pb";
+
+// clang-format off
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+  info: {
+    title: "blog system: category service"
+    version: "v1.0.0"
+  };
+};
+// clang-format on
+
+service CategoryService {
+  // 获取类目列表，根据用户角色来判断他所能看到的状态
+  // 需要带上X-Keystone-User-Info
+  rpc FindCategories (FindCategoriesRequest) returns (FindCategoriesReply) {
+    option (google.api.http) = {
+      get: "/v1/categories"
+    };
+  }
+
+  // 获取单个类目
+  // 需要带上X-Keystone-User-Info
+  rpc GetCategory (GetCategoryRequest) returns (GetCategoryReply) {
+    option (google.api.http) = {
+      get: "/v1/categories/{id}"
+    };
+  }
+
+  // 生成新的类目
+  // 目前只支持两层类目
+  // 需要带上X-Keystone-User-Info
+  rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryReply) {
+    option (google.api.http) = {
+      post: "/v1/categories"
+      body: "info"
+    };
+  }
+
+  // 更新类目
+  // 类目修改只支持同级移动
+  // 需要带上X-Keystone-User-Info
+  rpc UpdateCategory (UpdateCategoryRequest) returns (UpdateCategoryReply) {
+    option (google.api.http) = {
+      put: "/v1/categories/{id}"
+      body: "info"
+    };
+  }
+
+  // 删除类目
+  // 这是修改类目的状态，需要该类目下没有关联任何服务或者所有关联的服务都删除才能删除这个类目
+  // 需要带上X-Keystone-User-Info
+  rpc DeleteCategory (DeleteCategoryRequest) returns (DeleteCategoryReply) {
+    option (google.api.http) = {
+      delete: "/v1/categories/{id}"
+    };
+  }
+}
+
+// ////////////////////////////////////////////////////////////
+//
+// 类目相关请求返回结构
+//
+// ////////////////////////////////////////////////////////////
+
+// 类目列表查询请求结构
+message FindCategoriesRequest {
+  // 类目编号列表，用于指定查询哪些类目
+  repeated uint64 ids = 1;
+  // 父类目编号列表
+  repeated uint64 parent_ids = 2;
+  // list请求对应的翻页：offset, limit
+  common.ListPage page = 5;
+}
+
+// 类目列表查询返回结构
+message FindCategoriesReply {
+  repeated Category categories = 1;
+  // list返回对应的翻页：offset, total
+  common.ListPage page = 2;
+}
+
+// 单个类目查询请求结构
+message GetCategoryRequest {
+  // 类目编号
+  uint64 id = 1;
+}
+
+// 单个类目查询返回结构
+message GetCategoryReply {
+  Category category = 1;
+}
+
+// 类目新增请求结构
+message CreateCategoryRequest {
+  // 类目基本信息
+  CategoryUpsert info = 1;
+}
+
+// 类目新增返回结构
+message CreateCategoryReply {
+  // 类目编号
+  uint64 id = 1;
+}
+
+// 类目修改请求结构
+message UpdateCategoryRequest {
+  // 类目编号
+  uint64 id = 1;
+  // 类目基本信息
+  CategoryUpsert info = 2;
+}
+
+// 类目修改返回结构
+message UpdateCategoryReply {}
+
+// 类目删除请求结构
+message DeleteCategoryRequest {
+  // 类目编号
+  uint64 id = 1;
+}
+
+// 类目删除请求结构
+message DeleteCategoryReply {}
+
+// ////////////////////////////////////////////////////////////
+//
+// 类目相关CRUD结构
+//
+// ////////////////////////////////////////////////////////////
+
+// 类目插入/修改结构
+message CategoryUpsert {
+  // 可选，类目编号，主要为初始化使用
+  uint64 id = 30;
+  // 父类目编号
+  uint64 parent_id = 1;
+  // 类目名称
+  string name = 2;
+}
+
+
+
+
+// 类目信息
+message Category {
+  // 类目编号
+  uint64 id = 1;
+  // 父类目编号
+  uint64 parent_id = 2;
+  // 类目级别
+  int32 level = 3;
+  // 类目名称
+  string name = 4;
+  // 创建时间, 系统自动生成.
+  google.protobuf.Timestamp created_at = 8;
+  // 修改时间, 系统自动生成.
+  google.protobuf.Timestamp updated_at = 9;
+}

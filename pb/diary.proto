@@ -1,0 +1,160 @@
+syntax = "proto3";
+package pb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+import "pb/common/common.proto"; 
+
+option go_package = "github.com/DeYu666/blog_common/gen/pb";
+
+// clang-format off
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+  info: {
+    title: "content system: diary service"
+    version: "v1.0.0"
+  };
+};
+// clang-format on
+
+//缺两个接口，点击喜欢，点击观看
+
+service DiaryService {
+
+  // 获取日记列表，根据用户角色来判断他所能看到的状态
+  // 需要带上 X-Keystone-User-Info
+  rpc FindDiarys (FindDiarysRequest) returns (FindDiarysReply) {
+    option (google.api.http) = {
+      get: "/v1/diarys"
+    };
+  }
+
+  // 生成新的日记
+  // 需要带上X-Keystone-User-Info
+  rpc CreateDiary (CreateDiaryRequest) returns (CreateDiaryReply) {
+    option (google.api.http) = {
+      post: "/v1/diary"
+      body: "info"
+    };
+  }
+
+  // 更新日记
+  // 需要带上X-Keystone-User-Info
+  rpc UpdateDiary (UpdateDiaryRequest) returns (UpdateDiaryReply) {
+    option (google.api.http) = {
+      put: "/v1/diary/{id}"
+      body: "info"
+    };
+  }
+
+  // 删除日记
+  // 需要带上X-Keystone-User-Info
+  rpc DeleteDiary (DeleteDiaryRequest) returns (DeleteDiaryReply) {
+    option (google.api.http) = {
+      delete: "/v1/diary/{id}"
+    };
+  }
+}
+
+// ////////////////////////////////////////////////////////////
+//
+// 日记内容相关请求返回结构
+//
+// ////////////////////////////////////////////////////////////
+
+// 日记查询请求结构
+message FindDiarysRequest {
+  // 日记编号列表,用于指定查询哪些日记,为空则表示查询所有的信息
+  repeated uint64 ids = 1;
+  // 日记状态
+  Diary.Status status = 2;
+  // 用户编号
+  repeated uint64 author_id = 3;
+  // list请求对应的翻页：offset, limit
+  common.ListPage page = 5;
+}
+
+// 日记列表查询返回结构
+message FindDiarysReply {
+  repeated Diary diarys = 1;
+  // list返回对应的翻页：offset, total
+  common.ListPage page = 2;
+}
+
+// 日记新增请求结构
+message CreateDiaryRequest {
+  // 日记基本信息
+  DiaryUpsert info = 1;
+}
+
+// 日记新增返回结构
+message CreateDiaryReply {
+  // 日记编号
+  uint64 id = 1;
+}
+
+// 日记修改请求结构
+message UpdateDiaryRequest {
+  // 日记编号
+  uint64 id = 1;
+  // 日记基本信息
+  DiaryUpsert info = 2;
+}
+
+// 日记修改返回结构
+message UpdateDiaryReply {}
+
+// 日记删除请求结构
+message DeleteDiaryRequest {
+  // 日记编号
+  uint64 id = 1;
+}
+
+// 日记删除请求结构
+message DeleteDiaryReply {}
+
+// ////////////////////////////////////////////////////////////
+//
+// 日记相关CRUD结构
+//
+// ////////////////////////////////////////////////////////////
+
+// 日记插入/修改结构
+message DiaryUpsert {
+  // 可选，日记编号，主要为初始化使用
+  uint64 id = 30;
+  // 日记内容
+  string content = 2;
+  // 日记状态
+  Diary.Status status = 3;
+  // 用户编号
+  uint64 author_id = 5;
+}
+
+
+// 日记信息
+message Diary {
+   // 日记的状态枚举
+   enum Status {
+    // 不限制，只是用来筛选状态用
+    STATUS_UNLIMITED = 0;
+    // 开放
+    STATUS_OPEN = 1;
+    // 关闭
+    STATUS_CLOSE = 2;
+    // 占位符，用于判断最大值，这个值会随时间改变
+    STATUS_NONE = 8;
+  }
+  // 日记编号
+  uint64 id = 1;
+  // 日记内容
+  string content = 2;
+  // 日记状态
+  Status status = 3;
+  // 用户编号
+  uint64 author_id = 4;
+  // 创建时间, 系统自动生成.
+  google.protobuf.Timestamp created_at = 18;
+  // 修改时间, 系统自动生成.
+  google.protobuf.Timestamp updated_at = 19;
+}
